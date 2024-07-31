@@ -5,47 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حاسبة القرض العقاري</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             direction: rtl;
             text-align: right;
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #0056b3;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-control {
+            font-size: 1.2rem;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ced4da;
         }
         .btn-custom {
-            width: 100px;
-            margin: 5px;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+        }
+        .results p {
+            font-size: 1.2rem;
+        }
+        @media (min-width: 576px) {
+            .btn-custom {
+                width: auto;
+                margin: 5px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">حاسبة القرض العقاري</h1>
+        <h1 class="text-center mb-4">حاسبة القرض العقاري</h1>
         <div class="card p-4">
             <form id="loanForm">
-                <div class="form-group">
-                    <label for="loanAmount">إجمالي ثمن الوحدة</label>
-                    <input type="number" id="loanAmount" class="form-control" placeholder="أدخل ثمن الوحدة" required>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="loanAmount">إجمالي ثمن الوحدة</label>
+                        <input type="number" id="loanAmount" class="form-control" placeholder="أدخل ثمن الوحدة" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="downPayment">نسبة المقدم (%)</label>
+                        <input type="number" id="downPayment" value="20" class="form-control" placeholder="أدخل نسبة المقدم" required>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="downPayment">نسبة المقدم (%)</label>
-                    <input type="number" id="downPayment" value="20" class="form-control" placeholder="أدخل نسبة المقدم" required>
-                </div>
-                <div class="form-group">
-                    <label for="interestRate">نسبة الفائدة السنوية</label>
-                    <input type="number" id="interestRate" value="8" class="form-control" placeholder="أدخل نسبة الفائدة السنوية" required>
-                </div>
-                <div class="form-group">
-                    <label for="loanTerm">مدة التقسيط (بالسنوات)</label>
-                    <input type="number" id="loanTerm" class="form-control" value="25" placeholder="أدخل مدة التقسيط بالسنوات" required>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="interestRate">نسبة الفائدة السنوية</label>
+                        <input type="number" id="interestRate" value="8" class="form-control" placeholder="أدخل نسبة الفائدة السنوية" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="loanTerm">مدة التقسيط (بالسنوات)</label>
+                        <input type="number" id="loanTerm" class="form-control" value="25" placeholder="أدخل مدة التقسيط بالسنوات" required>
+                    </div>
                 </div>
                 <div class="text-center">
                     <button type="button" class="btn btn-primary btn-custom" onclick="calculateLoan()">احسب</button>
                     <button type="reset" class="btn btn-secondary btn-custom">إعادة</button>
                 </div>
             </form>
-            <div class="mt-4">
+            <div class="mt-4 results">
                 <h4>نتائج الحساب</h4>
-                <p class="text-sucess" id="downPaymentAmount"></p>
+                <p id="downPaymentAmount"></p>
                 <p id="TotalLoanAmount"></p>
                 <p id="monthlyPayment"></p>
                 <p id="totalPayment"></p>
