@@ -16,7 +16,8 @@
         }
         h1 {
             font-size: 2.5rem;
-            color: #0056b3;
+            color: #ff6f61;
+            text-shadow: 1px 1px 2px #000;
         }
         .card {
             background-color: #ffffff;
@@ -36,7 +37,7 @@
             border-radius: 10px;
         }
         .btn-primary {
-            background-color: #007bff;
+            background-color: #ff6f61;
             border: none;
         }
         .btn-secondary {
@@ -50,6 +51,17 @@
             .btn-custom {
                 width: auto;
                 margin: 5px;
+            }
+        }
+        @media (max-width: 576px) {
+            .form-row {
+                flex-direction: column;
+            }
+            .form-group {
+                width: 100%;
+            }
+            .btn-custom {
+                width: 100%;
             }
         }
     </style>
