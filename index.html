@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حاسبة القرض العقاري</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container mt-5">
@@ -28,6 +29,7 @@
                 <h4>نتائج الحساب</h4>
                 <p id="monthlyPayment"></p>
                 <p id="totalPayment"></p>
+                <canvas id="paymentChart" width="400" height="200"></canvas>
             </div>
         </div>
     </div>
@@ -36,17 +38,40 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+        let chart;
+
         function calculateLoan() {
             const loanAmount = parseFloat(document.getElementById('loanAmount').value);
-            const interestRate = parseFloat(document.getElementById('interestRate').value) / 100 / 12;
-            const loanTerm = parseInt(document.getElementById('loanTerm').value) * 12;
+            const annualInterestRate = parseFloat(document.getElementById('interestRate').value) / 100;
+            const loanTermYears = parseInt(document.getElementById('loanTerm').value);
+            const loanTermMonths = loanTermYears * 12;
+            const monthlyInterestRate = annualInterestRate / 12;
 
-            const x = Math.pow(1 + interestRate, loanTerm);
-            const monthlyPayment = (loanAmount * interestRate * x) / (x - 1);
-            const totalPayment = monthlyPayment * loanTerm;
+            // حساب القسط الشهري باستخدام معادلة الفائدة المتناقصة
+            const x = Math.pow(1 + monthlyInterestRate, loanTermMonths);
+            const monthlyPayment = (loanAmount * monthlyInterestRate * x) / (x - 1);
+            const totalPayment = monthlyPayment * loanTermMonths;
 
             document.getElementById('monthlyPayment').textContent = `القسط الشهري: ${monthlyPayment.toFixed(2)} جنيه`;
             document.getElementById('totalPayment').textContent = `إجمالي المدفوع بعد المدة: ${totalPayment.toFixed(2)} جنيه`;
+
+            // إعداد بيانات للرسم البياني
+            let principalBalance = loanAmount;
+            const principalPayments = [];
+            const interestPayments = [];
+            const balances = [];
+
+            for (let i = 0; i < loanTermMonths; i++) {
+                const interestPayment = principalBalance * monthlyInterestRate;
+                const principalPayment = monthlyPayment - interestPayment;
+                principalBalance -= principalPayment;
+
+                principalPayments.push(principalPayment);
+                interestPayments.push(interestPayment);
+                balances.push(principalBalance);
+            }
+
+            drawChart(principalPayments, interestPayments, balances);
         }
 
         function resetFields() {
@@ -55,6 +80,61 @@
             document.getElementById('loanTerm').value = '';
             document.getElementById('monthlyPayment').textContent = '';
             document.getElementById('totalPayment').textContent = '';
+            if (chart) {
+                chart.destroy();
+            }
+        }
+
+        function drawChart(principalPayments, interestPayments, balances) {
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            if (chart) {
+                chart.destroy();
+            }
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: principalPayments.map((_, i) => i + 1),
+                    datasets: [
+                        {
+                            label: 'الدفعة الرئيسية',
+                            data: principalPayments,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                        {
+                            label: 'دفعة الفائدة',
+                            data: interestPayments,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                        {
+                            label: 'الرصيد المتبقي',
+                            data: balances,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'الأشهر',
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'المبلغ (جنيه)',
+                            },
+                        },
+                    },
+                },
+            });
         }
     </script>
 </body>
