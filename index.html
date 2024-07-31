@@ -1,11 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حاسبة القرض العقاري</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        .btn-custom {
+            width: 100px;
+            margin: 5px;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
@@ -16,6 +26,10 @@
                 <input type="number" id="loanAmount" class="form-control" placeholder="أدخل مبلغ القرض">
             </div>
             <div class="form-group">
+                <label for="downPayment">نسبة المقدم (%)</label>
+                <input type="number" id="downPayment" class="form-control" placeholder="أدخل نسبة المقدم">
+            </div>
+            <div class="form-group">
                 <label for="interestRate">نسبة الفائدة السنوية</label>
                 <input type="number" id="interestRate" class="form-control" placeholder="أدخل نسبة الفائدة السنوية">
             </div>
@@ -23,10 +37,13 @@
                 <label for="loanTerm">مدة التقسيط (بالسنوات)</label>
                 <input type="number" id="loanTerm" class="form-control" placeholder="أدخل مدة التقسيط بالسنوات">
             </div>
-            <button class="btn btn-primary" onclick="calculateLoan()">احسب</button>
-            <button class="btn btn-secondary" onclick="resetFields()">إعادة</button>
+            <div class="text-center">
+                <button class="btn btn-primary btn-custom" onclick="calculateLoan()">احسب</button>
+                <button class="btn btn-secondary btn-custom" onclick="resetFields()">إعادة</button>
+            </div>
             <div class="mt-4">
                 <h4>نتائج الحساب</h4>
+                <p id="downPaymentAmount"></p>
                 <p id="monthlyPayment"></p>
                 <p id="totalPayment"></p>
                 <canvas id="paymentChart" width="400" height="200"></canvas>
@@ -42,21 +59,24 @@
 
         function calculateLoan() {
             const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const downPaymentPercentage = parseFloat(document.getElementById('downPayment').value) / 100;
             const annualInterestRate = parseFloat(document.getElementById('interestRate').value) / 100;
             const loanTermYears = parseInt(document.getElementById('loanTerm').value);
             const loanTermMonths = loanTermYears * 12;
             const monthlyInterestRate = annualInterestRate / 12;
 
-            // حساب القسط الشهري باستخدام معادلة الفائدة المتناقصة
+            const downPaymentAmount = loanAmount * downPaymentPercentage;
+            const principalAmount = loanAmount - downPaymentAmount;
+
             const x = Math.pow(1 + monthlyInterestRate, loanTermMonths);
-            const monthlyPayment = (loanAmount * monthlyInterestRate * x) / (x - 1);
+            const monthlyPayment = (principalAmount * monthlyInterestRate * x) / (x - 1);
             const totalPayment = monthlyPayment * loanTermMonths;
 
-            document.getElementById('monthlyPayment').textContent = `القسط الشهري: ${monthlyPayment.toFixed(2)} جنيه`;
-            document.getElementById('totalPayment').textContent = `إجمالي المدفوع بعد المدة: ${totalPayment.toFixed(2)} جنيه`;
+            document.getElementById('downPaymentAmount').textContent = `المقدم: ${downPaymentAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} جنيه`;
+            document.getElementById('monthlyPayment').textContent = `القسط الشهري: ${monthlyPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} جنيه`;
+            document.getElementById('totalPayment').textContent = `إجمالي المدفوع بعد المدة: ${totalPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} جنيه`;
 
-            // إعداد بيانات للرسم البياني
-            let principalBalance = loanAmount;
+            let principalBalance = principalAmount;
             const principalPayments = [];
             const interestPayments = [];
             const balances = [];
@@ -76,8 +96,10 @@
 
         function resetFields() {
             document.getElementById('loanAmount').value = '';
+            document.getElementById('downPayment').value = '';
             document.getElementById('interestRate').value = '';
             document.getElementById('loanTerm').value = '';
+            document.getElementById('downPaymentAmount').textContent = '';
             document.getElementById('monthlyPayment').textContent = '';
             document.getElementById('totalPayment').textContent = '';
             if (chart) {
