@@ -21,32 +21,36 @@
     <div class="container mt-5">
         <h1 class="text-center">حاسبة القرض العقاري</h1>
         <div class="card p-4">
-            <div class="form-group">
-                <label for="loanAmount">إجمالي مبلغ القرض</label>
-                <input type="number" id="loanAmount" class="form-control" placeholder="أدخل مبلغ القرض">
-            </div>
-            <div class="form-group">
-                <label for="downPayment">نسبة المقدم (%)</label>
-                <input type="number" id="downPayment" class="form-control" placeholder="أدخل نسبة المقدم">
-            </div>
-            <div class="form-group">
-                <label for="interestRate">نسبة الفائدة السنوية</label>
-                <input type="number" id="interestRate" class="form-control" placeholder="أدخل نسبة الفائدة السنوية">
-            </div>
-            <div class="form-group">
-                <label for="loanTerm">مدة التقسيط (بالسنوات)</label>
-                <input type="number" id="loanTerm" class="form-control" placeholder="أدخل مدة التقسيط بالسنوات">
-            </div>
-            <div class="text-center">
-                <button class="btn btn-primary btn-custom" onclick="calculateLoan()">احسب</button>
-                <button class="btn btn-secondary btn-custom" onclick="resetFields()">إعادة</button>
-            </div>
+            <form id="loanForm">
+                <div class="form-group">
+                    <label for="loanAmount">إجمالي ثمن الوحدة</label>
+                    <input type="number" id="loanAmount" class="form-control" placeholder="أدخل ثمن الوحدة" required>
+                </div>
+                <div class="form-group">
+                    <label for="downPayment">نسبة المقدم (%)</label>
+                    <input type="number" id="downPayment" value="20" class="form-control" placeholder="أدخل نسبة المقدم" required>
+                </div>
+                <div class="form-group">
+                    <label for="interestRate">نسبة الفائدة السنوية</label>
+                    <input type="number" id="interestRate" value="8" class="form-control" placeholder="أدخل نسبة الفائدة السنوية" required>
+                </div>
+                <div class="form-group">
+                    <label for="loanTerm">مدة التقسيط (بالسنوات)</label>
+                    <input type="number" id="loanTerm" class="form-control" value="25" placeholder="أدخل مدة التقسيط بالسنوات" required>
+                </div>
+                <div class="text-center">
+                    <button type="button" class="btn btn-primary btn-custom" onclick="calculateLoan()">احسب</button>
+                    <button type="reset" class="btn btn-secondary btn-custom">إعادة</button>
+                </div>
+            </form>
             <div class="mt-4">
                 <h4>نتائج الحساب</h4>
-                <p id="downPaymentAmount"></p>
+                <p class="text-sucess" id="downPaymentAmount"></p>
+                <p id="TotalLoanAmount"></p>
                 <p id="monthlyPayment"></p>
                 <p id="totalPayment"></p>
                 <canvas id="paymentChart" width="400" height="200"></canvas>
+                <canvas id="pieChart" width="400" height="200"></canvas>
             </div>
         </div>
     </div>
@@ -55,7 +59,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        let chart;
+        let paymentChart, pieChart;
 
         function calculateLoan() {
             const loanAmount = parseFloat(document.getElementById('loanAmount').value);
@@ -65,6 +69,11 @@
             const loanTermMonths = loanTermYears * 12;
             const monthlyInterestRate = annualInterestRate / 12;
 
+            if (isNaN(loanAmount) || isNaN(downPaymentPercentage) || isNaN(annualInterestRate) || isNaN(loanTermYears)) {
+                alert("يرجى إدخال جميع القيم بشكل صحيح");
+                return;
+            }
+
             const downPaymentAmount = loanAmount * downPaymentPercentage;
             const principalAmount = loanAmount - downPaymentAmount;
 
@@ -72,47 +81,50 @@
             const monthlyPayment = (principalAmount * monthlyInterestRate * x) / (x - 1);
             const totalPayment = monthlyPayment * loanTermMonths;
 
-            document.getElementById('downPaymentAmount').textContent = `المقدم: ${downPaymentAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} جنيه`;
-            document.getElementById('monthlyPayment').textContent = `القسط الشهري: ${monthlyPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} جنيه`;
-            document.getElementById('totalPayment').textContent = `إجمالي المدفوع بعد المدة: ${totalPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} جنيه`;
+            document.getElementById('downPaymentAmount').innerHTML = `المقدم: <span class="text-danger">${downPaymentAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
+            document.getElementById('TotalLoanAmount').innerHTML = `اجمالي القرض: <span class="text-success">${principalAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
+            document.getElementById('monthlyPayment').innerHTML = `القسط الشهري: <span class="text-primary">${monthlyPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
+            document.getElementById('totalPayment').innerHTML = `إجمالي المدفوع بعد المدة: <span class="text-warning">${totalPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
 
             let principalBalance = principalAmount;
             const principalPayments = [];
             const interestPayments = [];
             const balances = [];
+            let cumulativePrincipal = 0;
+            let cumulativeInterest = 0;
+            const cumulativePrincipalPayments = [];
+            const cumulativeInterestPayments = [];
 
             for (let i = 0; i < loanTermMonths; i++) {
                 const interestPayment = principalBalance * monthlyInterestRate;
                 const principalPayment = monthlyPayment - interestPayment;
                 principalBalance -= principalPayment;
 
+                cumulativePrincipal += principalPayment;
+                cumulativeInterest += interestPayment;
+
                 principalPayments.push(principalPayment);
                 interestPayments.push(interestPayment);
                 balances.push(principalBalance);
+                cumulativePrincipalPayments.push(cumulativePrincipal);
+                cumulativeInterestPayments.push(cumulativeInterest);
             }
 
-            drawChart(principalPayments, interestPayments, balances);
+            drawCharts(principalPayments, interestPayments, balances, cumulativePrincipal, cumulativeInterest);
         }
 
-        function resetFields() {
-            document.getElementById('loanAmount').value = '';
-            document.getElementById('downPayment').value = '';
-            document.getElementById('interestRate').value = '';
-            document.getElementById('loanTerm').value = '';
-            document.getElementById('downPaymentAmount').textContent = '';
-            document.getElementById('monthlyPayment').textContent = '';
-            document.getElementById('totalPayment').textContent = '';
-            if (chart) {
-                chart.destroy();
-            }
-        }
+        function drawCharts(principalPayments, interestPayments, balances, cumulativePrincipal, cumulativeInterest) {
+            const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
 
-        function drawChart(principalPayments, interestPayments, balances) {
-            const ctx = document.getElementById('paymentChart').getContext('2d');
-            if (chart) {
-                chart.destroy();
+            if (paymentChart) {
+                paymentChart.destroy();
             }
-            chart = new Chart(ctx, {
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            paymentChart = new Chart(paymentCtx, {
                 type: 'line',
                 data: {
                     labels: principalPayments.map((_, i) => i + 1),
@@ -156,6 +168,31 @@
                         },
                     },
                 },
+            });
+
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['إجمالي الفائدة المدفوعة', 'إجمالي الدفعة الرئيسية المدفوعة'],
+                    datasets: [{
+                        data: [cumulativeInterest, cumulativePrincipal],
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'توزيع الدفعات'
+                        }
+                    }
+                }
             });
         }
     </script>
