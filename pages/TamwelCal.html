@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة القرض العقاري</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #ff6f61;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-control {
+            font-size: 1.2rem;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ced4da;
+        }
+        .btn-custom {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+        }
+        .btn-primary {
+            background-color: #ff6f61;
+            border: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+        }
+        .results p {
+            font-size: 1.2rem;
+        }
+        @media (min-width: 576px) {
+            .btn-custom {
+                width: auto;
+                margin: 5px;
+            }
+        }
+        @media (max-width: 576px) {
+            .form-row {
+                flex-direction: column;
+            }
+            .form-group {
+                width: 100%;
+            }
+            .btn-custom {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">حاسبة القرض العقاري</h1>
+        <div class="card p-4">
+            <form id="loanForm">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="loanAmount">إجمالي ثمن الوحدة</label>
+                        <input type="number" id="loanAmount" class="form-control" placeholder="أدخل ثمن الوحدة" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="downPayment">نسبة المقدم (%)</label>
+                        <input type="number" id="downPayment" value="20" class="form-control" placeholder="أدخل نسبة المقدم" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="interestRate">نسبة الفائدة السنوية</label>
+                        <input type="number" id="interestRate" value="8" class="form-control" placeholder="أدخل نسبة الفائدة السنوية" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="loanTerm">مدة التقسيط (بالسنوات)</label>
+                        <input type="number" id="loanTerm" class="form-control" value="25" placeholder="أدخل مدة التقسيط بالسنوات" required>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button type="button" class="btn btn-primary btn-custom" onclick="calculateLoan()">احسب</button>
+                    <button type="reset" class="btn btn-secondary btn-custom">إعادة</button>
+                </div>
+            </form>
+            <div class="mt-4 results">
+                <h4>نتائج الحساب</h4>
+                <p id="downPaymentAmount"></p>
+                <p id="TotalLoanAmount"></p>
+                <p id="monthlyPayment"></p>
+                <p id="totalPayment"></p>
+                <canvas id="paymentChart" width="400" height="200"></canvas>
+                <canvas id="pieChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        let paymentChart, pieChart;
+
+        function calculateLoan() {
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const downPaymentPercentage = parseFloat(document.getElementById('downPayment').value) / 100;
+            const annualInterestRate = parseFloat(document.getElementById('interestRate').value) / 100;
+            const loanTermYears = parseInt(document.getElementById('loanTerm').value);
+            const loanTermMonths = loanTermYears * 12;
+            const monthlyInterestRate = annualInterestRate / 12;
+
+            if (isNaN(loanAmount) || isNaN(downPaymentPercentage) || isNaN(annualInterestRate) || isNaN(loanTermYears)) {
+                alert("يرجى إدخال جميع القيم بشكل صحيح");
+                return;
+            }
+
+            const downPaymentAmount = loanAmount * downPaymentPercentage;
+            const principalAmount = loanAmount - downPaymentAmount;
+
+            const x = Math.pow(1 + monthlyInterestRate, loanTermMonths);
+            const monthlyPayment = (principalAmount * monthlyInterestRate * x) / (x - 1);
+            const totalPayment = monthlyPayment * loanTermMonths;
+
+            document.getElementById('downPaymentAmount').innerHTML = `المقدم: <span class="text-danger">${downPaymentAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
+            document.getElementById('TotalLoanAmount').innerHTML = `اجمالي القرض: <span class="text-success">${principalAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
+            document.getElementById('monthlyPayment').innerHTML = `القسط الشهري: <span class="text-primary">${monthlyPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
+            document.getElementById('totalPayment').innerHTML = `إجمالي المدفوع بعد المدة: <span class="text-warning">${totalPayment.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span> جنيه`;
+
+            let principalBalance = principalAmount;
+            const principalPayments = [];
+            const interestPayments = [];
+            const balances = [];
+            let cumulativePrincipal = 0;
+            let cumulativeInterest = 0;
+            const cumulativePrincipalPayments = [];
+            const cumulativeInterestPayments = [];
+
+            for (let i = 0; i < loanTermMonths; i++) {
+                const interestPayment = principalBalance * monthlyInterestRate;
+                const principalPayment = monthlyPayment - interestPayment;
+                principalBalance -= principalPayment;
+
+                cumulativePrincipal += principalPayment;
+                cumulativeInterest += interestPayment;
+
+                principalPayments.push(principalPayment);
+                interestPayments.push(interestPayment);
+                balances.push(principalBalance);
+                cumulativePrincipalPayments.push(cumulativePrincipal);
+                cumulativeInterestPayments.push(cumulativeInterest);
+            }
+
+            drawCharts(principalPayments, interestPayments, balances, cumulativePrincipal, cumulativeInterest);
+        }
+
+        function drawCharts(principalPayments, interestPayments, balances, cumulativePrincipal, cumulativeInterest) {
+            const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+
+            if (paymentChart) {
+                paymentChart.destroy();
+            }
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            paymentChart = new Chart(paymentCtx, {
+                type: 'line',
+                data: {
+                    labels: principalPayments.map((_, i) => i + 1),
+                    datasets: [
+                        {
+                            label: 'الدفعة الرئيسية',
+                            data: principalPayments,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                        {
+                            label: 'دفعة الفائدة',
+                            data: interestPayments,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                        {
+                            label: 'الرصيد المتبقي',
+                            data: balances,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'الأشهر',
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'المبلغ (جنيه)',
+                            },
+                        },
+                    },
+                },
+            });
+
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['إجمالي الفائدة المدفوعة', 'إجمالي الدفعة الرئيسية المدفوعة'],
+                    datasets: [{
+                        data: [cumulativeInterest, cumulativePrincipal],
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'توزيع الدفعات'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
